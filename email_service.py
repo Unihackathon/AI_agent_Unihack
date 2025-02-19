@@ -7,6 +7,7 @@ import pandas as pd
 from datetime import datetime
 import plotly.graph_objects as go
 import plotly.io as pio
+from plotly.subplots import make_subplots
 from jinja2 import Template
 import os
 from dotenv import load_dotenv
@@ -19,7 +20,7 @@ class EmailReportService:
     def __init__(self):
         load_dotenv()
         self.smtp_server = "smtp.gmail.com"
-        self.smtp_port = 587
+        self.smtp_port = 465
         self.sender_email = os.getenv("EMAIL_SENDER")
         self.sender_password = os.getenv("EMAIL_PASSWORD")
 
@@ -96,10 +97,31 @@ class EmailReportService:
                     <p>Volatility: {{ (stats.volatility * 100) | round(2) }}%</p>
                 </div>
 
-                {% if chart %}
+                {% if price_chart %}
                 <div class="chart">
                     <h4>Price Chart</h4>
-                    {{ chart | safe }}
+                    {{ price_chart | safe }}
+                </div>
+                {% endif %}
+
+                {% if rsi_chart %}
+                <div class="chart">
+                    <h4>RSI Chart</h4>
+                    {{ rsi_chart | safe }}
+                </div>
+                {% endif %}
+
+                {% if macd_chart %}
+                <div class="chart">
+                    <h4>MACD Chart</h4>
+                    {{ macd_chart | safe }}
+                </div>
+                {% endif %}
+
+                {% if bb_chart %}
+                <div class="chart">
+                    <h4>Bollinger Bands</h4>
+                    {{ bb_chart | safe }}
                 </div>
                 {% endif %}
 
@@ -168,12 +190,13 @@ class EmailReportService:
     ) -> str:
         """Create HTML market summary with enhanced charts"""
         try:
-            # Generate price chart
-            fig = go.Figure()
             df = pd.DataFrame(data.get("data", []))
 
+            # Generate price chart
+            fig_price = go.Figure()
+
             # Add candlestick chart
-            fig.add_trace(
+            fig_price.add_trace(
                 go.Candlestick(
                     x=df.index,
                     open=df["Open"],
@@ -187,7 +210,7 @@ class EmailReportService:
             # Add moving averages
             for ma in ["SMA_20", "SMA_50"]:
                 if ma in df.columns:
-                    fig.add_trace(
+                    fig_price.add_trace(
                         go.Scatter(
                             x=df.index,
                             y=df[ma],
@@ -199,7 +222,7 @@ class EmailReportService:
                     )
 
             # Update layout
-            fig.update_layout(
+            fig_price.update_layout(
                 title=f"{data['symbol']} Price Chart",
                 yaxis_title="Price",
                 template="plotly_white",
@@ -208,8 +231,117 @@ class EmailReportService:
                 showlegend=True,
             )
 
-            # Convert chart to HTML
-            chart_html = pio.to_html(fig, full_html=False)
+            # Convert price chart to HTML
+            price_chart_html = pio.to_html(fig_price, full_html=False)
+
+            # Generate RSI chart
+            fig_rsi = go.Figure()
+            if "RSI" in df.columns:
+                fig_rsi.add_trace(
+                    go.Scatter(
+                        x=df.index,
+                        y=df["RSI"],
+                        name="RSI",
+                        line=dict(color="purple", width=1),
+                    )
+                )
+                fig_rsi.add_hline(y=70, line_dash="dash", line_color="red")
+                fig_rsi.add_hline(y=30, line_dash="dash", line_color="green")
+                fig_rsi.update_layout(
+                    title="Relative Strength Index (RSI)",
+                    yaxis_title="RSI",
+                    template="plotly_white",
+                    height=400,
+                )
+
+            # Convert RSI chart to HTML
+            rsi_chart_html = pio.to_html(fig_rsi, full_html=False)
+
+            # Generate MACD chart
+            fig_macd = make_subplots(rows=2, cols=1, shared_xaxes=True)
+            if all(col in df.columns for col in ["MACD_12_26_9", "MACDs_12_26_9", "MACDh_12_26_9"]):
+                fig_macd.add_trace(
+                    go.Scatter(
+                        x=df.index,
+                        y=df["MACD_12_26_9"],
+                        name="MACD",
+                        line=dict(color="blue", width=1),
+                    ),
+                    row=1,
+                    col=1,
+                )
+                fig_macd.add_trace(
+                    go.Scatter(
+                        x=df.index,
+                        y=df["MACDs_12_26_9"],
+                        name="Signal",
+                        line=dict(color="red", width=1),
+                    ),
+                    row=1,
+                    col=1,
+                )
+                fig_macd.add_trace(
+                    go.Bar(
+                        x=df.index,
+                        y=df["MACDh_12_26_9"],
+                        name="MACD Histogram",
+                        marker_color="green",
+                    ),
+                    row=2,
+                    col=1,
+                )
+                fig_macd.update_layout(
+                    title="Moving Average Convergence Divergence (MACD)",
+                    template="plotly_white",
+                    height=600,
+                )
+
+            # Convert MACD chart to HTML
+            macd_chart_html = pio.to_html(fig_macd, full_html=False)
+
+            # Generate Bollinger Bands chart
+            fig_bb = go.Figure()
+            if all(col in df.columns for col in ["BBU_20_2.0", "BBM_20_2.0", "BBL_20_2.0"]):
+                fig_bb.add_trace(
+                    go.Scatter(
+                        x=df.index,
+                        y=df["BBU_20_2.0"],
+                        name="Upper Band",
+                        line=dict(color="gray"),
+                    )
+                )
+                fig_bb.add_trace(
+                    go.Scatter(
+                        x=df.index,
+                        y=df["BBM_20_2.0"],
+                        name="Middle Band",
+                        line=dict(color="blue"),
+                    )
+                )
+                fig_bb.add_trace(
+                    go.Scatter(
+                        x=df.index,
+                        y=df["BBL_20_2.0"],
+                        name="Lower Band",
+                        line=dict(color="gray"),
+                    )
+                )
+                fig_bb.add_trace(
+                    go.Scatter(
+                        x=df.index,
+                        y=df["Close"],
+                        name="Close Price",
+                        line=dict(color="black"),
+                    )
+                )
+                fig_bb.update_layout(
+                    title="Bollinger Bands",
+                    template="plotly_white",
+                    height=400,
+                )
+
+            # Convert Bollinger Bands chart to HTML
+            bb_chart_html = pio.to_html(fig_bb, full_html=False)
 
             # Check for alerts
             alerts = self._check_alerts(df, insights)
@@ -222,7 +354,10 @@ class EmailReportService:
                 signals=insights["signals"],
                 risk=insights["risk_metrics"],
                 alerts=alerts,
-                chart=chart_html,
+                price_chart=price_chart_html,
+                rsi_chart=rsi_chart_html,
+                macd_chart=macd_chart_html,
+                bb_chart=bb_chart_html,
             )
 
             return html_content
@@ -357,10 +492,8 @@ class EmailReportService:
                             f'attachment; filename="{os.path.basename(file_path)}"'
                         )
                         msg.attach(part)
-
             # Connect to SMTP server
-            with smtplib.SMTP(self.smtp_server, self.smtp_port) as server:
-                server.starttls()
+            with smtplib.SMTP_SSL(self.smtp_server, self.smtp_port) as server:
                 server.login(self.sender_email, self.sender_password)
                 server.send_message(msg)
 
@@ -368,3 +501,12 @@ class EmailReportService:
         except Exception as e:
             print(f"Error sending email: {str(e)}")
             return False
+
+
+if __name__ == "__main__":
+    email_service = EmailReportService()
+    email_service.send_report(
+        recipient_email="adman19940805@gmail.com",
+        subject="Test Email last",
+        html_content="<h3>This is a test email</h3>",
+    )

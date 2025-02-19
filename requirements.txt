@@ -14,7 +14,7 @@ plotly>=5.18.0
 yfinance>=0.2.36
 requests>=2.31.0
 langchain>=0.1.9
-python-dotenv>=1.0.1
+python-dotenv>=0.19.0
 google-generativeai>=0.3.2
 pandas-ta>=0.3.14b0
 langchain-community

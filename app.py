@@ -6,6 +6,10 @@ import plotly.graph_objects as go
 from typing import Dict, Any
 from plotly.subplots import make_subplots
 
+from data_collection import FinancialDataCollector
+from data_analysis import FinancialAnalyzer  # Import FinancialAnalyzer
+from email_service import EmailReportService  # Correct import
+
 # Configure page settings
 st.set_page_config(page_title="Financial Data Analyzer", page_icon="📈", layout="wide")
 
@@ -16,6 +20,9 @@ API_BASE_URL = "http://localhost:8000"
 class FinancialDashboardApp:
     def __init__(self):
         self.setup_session_state()
+        self.collector = FinancialDataCollector()
+        self.analyzer = FinancialAnalyzer()  # Initialize FinancialAnalyzer
+        self.email_service = EmailReportService()  # Correct initialization
 
     def setup_session_state(self):
         """Initialize session state variables"""
@@ -24,30 +31,20 @@ class FinancialDashboardApp:
         if "current_period" not in st.session_state:
             st.session_state.current_period = "6mo"
 
-    def fetch_stock_data(self, symbol: str, period: str) -> Dict[str, Any]:
-        """Fetch stock data from API"""
-        try:
-            response = requests.post(
-                f"{API_BASE_URL}/api/stock/data",
-                json={"symbol": symbol, "period": period},
-            )
-            response.raise_for_status()
-            return response.json()
-        except Exception as e:
-            st.error(f"Error fetching stock data: {str(e)}")
-            return None
+    def fetch_stock_data(self, symbol: str, period: str) -> pd.DataFrame:
+        """Fetch stock data using FinancialDataCollector"""
+        data = self.collector.get_stock_data(symbol, period)
+        return data
 
     def fetch_analysis(self, symbol: str, period: str) -> Dict[str, Any]:
-        """Fetch stock analysis from API"""
-        try:
-            response = requests.post(
-                f"{API_BASE_URL}/api/stock/analysis",
-                json={"symbol": symbol, "period": period},
-            )
-            response.raise_for_status()
-            return response.json()
-        except Exception as e:
-            st.error(f"Error fetching analysis: {str(e)}")
+        """Fetch stock analysis from FinancialAnalyzer"""
+        data = self.collector.get_stock_data(symbol, period)
+        if data is not None:
+            data = self.analyzer.calculate_technical_indicators(data)
+            insights = self.analyzer.generate_insights(symbol, period)
+            return insights
+        else:
+            st.error(f"No data found for symbol {symbol}")
             return None
 
     def process_query(self, query: str, symbol: str, period: str) -> str:
@@ -97,6 +94,22 @@ class FinancialDashboardApp:
                 else:
                     st.warning("Please enter a question")
 
+            st.divider()
+
+            # Email report section
+            st.subheader("Email Report")
+            email = st.text_input("Enter your email address")
+            if st.button("Send Report"):
+                if email:
+                    with st.spinner("Sending report..."):
+                        success = self.send_email_report(email, symbol, period)
+                        if success:
+                            st.success("Report sent successfully!")
+                        else:
+                            st.error("Failed to send report")
+                else:
+                    st.warning("Please enter a valid email address")
+
     def render_main_content(self):
         """Render main dashboard content"""
         st.title(f"Financial Analysis Dashboard - {st.session_state.current_symbol}")
@@ -106,327 +119,231 @@ class FinancialDashboardApp:
             data = self.fetch_stock_data(
                 st.session_state.current_symbol, st.session_state.current_period
             )
-            analysis = self.fetch_analysis(
+            insights = self.fetch_analysis(
                 st.session_state.current_symbol, st.session_state.current_period
             )
 
-        if data and analysis:
-            # Convert data to DataFrame
-            df = pd.DataFrame(data["data"])
-            df.index = pd.to_datetime(df.index)
+        if data is not None and insights is not None:
+            # Calculate technical indicators
+            data = self.analyzer.calculate_technical_indicators(data)
 
-            # Create tabs for different views
-            tabs = st.tabs(["Overview", "Technical Analysis", "Statistics", "Insights"])
+            # Display main price chart
+            self._plot_price_chart(data, st.session_state.current_symbol)
 
-            # Overview Tab
-            with tabs[0]:
-                self.render_overview_tab(df, analysis)
+            # Display technical indicators
+            self._plot_technical_indicators(data)
 
-            # Technical Analysis Tab
-            with tabs[1]:
-                self.render_technical_tab(df)
+            # Display statistics and insights
+            self._display_insights(insights)
 
-            # Statistics Tab
-            with tabs[2]:
-                self.render_statistics_tab(analysis)
+    def _plot_price_chart(self, data: pd.DataFrame, symbol: str):
+        """Create main price and volume chart"""
+        st.subheader(f"{symbol} Price Chart")
 
-            # Insights Tab
-            with tabs[3]:
-                self.render_insights_tab(analysis)
+        fig = make_subplots(
+            rows=2,
+            cols=1,
+            shared_xaxes=True,
+            vertical_spacing=0.03,
+            subplot_titles=(f"{symbol} Price", "Volume"),
+            row_width=[0.7, 0.3],
+        )
 
-    def render_overview_tab(self, df: pd.DataFrame, analysis: Dict[str, Any]):
-        """Render overview tab content"""
-        col1, col2 = st.columns([2, 1])
+        # Candlestick chart
+        fig.add_trace(
+            go.Candlestick(
+                x=data.index,
+                open=data["Open"],
+                high=data["High"],
+                low=data["Low"],
+                close=data["Close"],
+                name="OHLC",
+            ),
+            row=1,
+            col=1,
+        )
 
-        with col1:
-            # Price chart with moving averages
-            fig = go.Figure()
+        # Add moving averages
+        fig.add_trace(
+            go.Scatter(
+                x=data.index,
+                y=data["SMA_20"],
+                name="SMA 20",
+                line=dict(color="orange"),
+            ),
+            row=1,
+            col=1,
+        )
 
-            # Candlestick chart
-            fig.add_trace(
-                go.Candlestick(
-                    x=df.index,
-                    open=df["Open"],
-                    high=df["High"],
-                    low=df["Low"],
-                    close=df["Close"],
-                    name="OHLC",
-                )
-            )
+        fig.add_trace(
+            go.Scatter(
+                x=data.index,
+                y=data["SMA_50"],
+                name="SMA 50",
+                line=dict(color="blue"),
+            ),
+            row=1,
+            col=1,
+        )
 
-            # Add moving averages
-            fig.add_trace(
-                go.Scatter(
-                    x=df.index,
-                    y=df["SMA_20"],
-                    name="SMA 20",
-                    line=dict(color="orange", width=1),
-                )
-            )
+        # Volume bar chart
+        fig.add_trace(
+            go.Bar(x=data.index, y=data["Volume"], name="Volume"), row=2, col=1
+        )
 
-            fig.add_trace(
-                go.Scatter(
-                    x=df.index,
-                    y=df["SMA_50"],
-                    name="SMA 50",
-                    line=dict(color="blue", width=1),
-                )
-            )
+        fig.update_layout(height=800, xaxis_rangeslider_visible=False, showlegend=True)
 
-            fig.update_layout(
-                title=f"{st.session_state.current_symbol} Price Chart",
-                yaxis_title="Price",
-                xaxis_title="Date",
-                height=500,
-                template="plotly_white",
-                xaxis_rangeslider_visible=False,
-                legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01),
-            )
-            st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True)
 
-            # Add volume chart below price chart
-            fig_volume = go.Figure()
-            fig_volume.add_trace(go.Bar(x=df.index, y=df["Volume"], name="Volume"))
-            fig_volume.update_layout(
-                title="Volume",
-                height=200,
-                template="plotly_white",
-                showlegend=False,
-                margin=dict(t=30, b=30),
-            )
-            st.plotly_chart(fig_volume, use_container_width=True)
-
-        with col2:
-            # Key metrics
-            st.subheader("Key Metrics")
-            stats = analysis["insights"]["statistics"]
-
-            st.metric(
-                "Current Price",
-                f"${stats['current_price']:.2f}",
-                f"{stats['price_change']['1d']:.2f}%",
-            )
-
-            st.metric(
-                "Volume",
-                f"{stats['volume_analysis']['avg_volume']:,.0f}",
-                f"{stats['volume_analysis']['volume_trend']:.2f}%",
-            )
-
-            st.metric("Volatility", f"{stats['volatility']*100:.2f}%")
-
-    def render_technical_tab(self, df: pd.DataFrame):
-        """Render technical analysis tab content"""
+    def _plot_technical_indicators(self, data: pd.DataFrame):
+        """Plot technical indicators"""
         st.subheader("Technical Indicators")
 
-        # Check for required columns
-        required_columns = {
-            "RSI": "RSI indicator",
-            "MACD_12_26_9": "MACD line",
-            "MACDs_12_26_9": "MACD signal",
-            "MACDh_12_26_9": "MACD histogram",
-            "BBU_20_2.0": "Bollinger Bands",
-        }
+        # Create tabs for different indicators
+        tabs = st.tabs(["RSI", "MACD", "Bollinger Bands"])
 
-        missing_indicators = [
-            name for col, name in required_columns.items() if col not in df.columns
-        ]
+        with tabs[0]:
+            self._plot_rsi(data)
 
-        if missing_indicators:
-            st.warning(f"Missing indicators: {', '.join(missing_indicators)}")
-            return
+        with tabs[1]:
+            self._plot_macd(data)
 
-        # RSI Chart
-        if "RSI" in df.columns:
-            fig_rsi = go.Figure()
-            fig_rsi.add_trace(
-                go.Scatter(
-                    x=df.index,
-                    y=df["RSI"],
-                    name="RSI",
-                    line=dict(color="purple", width=1),
-                )
+        with tabs[2]:
+            self._plot_bollinger_bands(data)
+
+    def _plot_rsi(self, data: pd.DataFrame):
+        """Plot RSI indicator"""
+        fig = go.Figure()
+
+        fig.add_trace(go.Scatter(x=data.index, y=data["RSI"], name="RSI"))
+
+        # Add overbought/oversold lines
+        fig.add_hline(y=70, line_dash="dash", line_color="red")
+        fig.add_hline(y=30, line_dash="dash", line_color="green")
+
+        fig.update_layout(
+            title="Relative Strength Index (RSI)", yaxis_title="RSI", height=400
+        )
+
+        st.plotly_chart(fig, use_container_width=True)
+
+    def _plot_macd(self, data: pd.DataFrame):
+        """Plot MACD indicator"""
+        fig = make_subplots(rows=2, cols=1, shared_xaxes=True)
+
+        fig.add_trace(
+            go.Scatter(x=data.index, y=data["MACD_12_26_9"], name="MACD"),
+            row=1,
+            col=1,
+        )
+
+        fig.add_trace(
+            go.Scatter(x=data.index, y=data["MACDs_12_26_9"], name="Signal"),
+            row=1,
+            col=1,
+        )
+
+        # MACD Histogram
+        fig.add_trace(
+            go.Bar(x=data.index, y=data["MACDh_12_26_9"], name="MACD Histogram"),
+            row=2,
+            col=1,
+        )
+
+        fig.update_layout(
+            title="Moving Average Convergence Divergence (MACD)", height=600
+        )
+
+        st.plotly_chart(fig, use_container_width=True)
+
+    def _plot_bollinger_bands(self, data: pd.DataFrame):
+        """Plot Bollinger Bands"""
+        fig = go.Figure()
+
+        fig.add_trace(
+            go.Scatter(
+                x=data.index,
+                y=data["BBU_20_2.0"],
+                name="Upper Band",
+                line=dict(color="gray"),
             )
-            fig_rsi.add_hline(
-                y=70, line_dash="dash", line_color="red", annotation_text="Overbought"
-            )
-            fig_rsi.add_hline(
-                y=30, line_dash="dash", line_color="green", annotation_text="Oversold"
-            )
-            fig_rsi.update_layout(
-                title="Relative Strength Index (RSI)",
-                height=300,
-                template="plotly_white",
-                yaxis=dict(range=[0, 100]),
-                showlegend=False,
-            )
-            st.plotly_chart(fig_rsi, use_container_width=True)
+        )
 
-        # MACD Chart
-        if all(
-            col in df.columns
-            for col in ["MACD_12_26_9", "MACDs_12_26_9", "MACDh_12_26_9"]
-        ):
-            fig_macd = make_subplots(
-                rows=2,
-                cols=1,
-                shared_xaxes=True,
-                vertical_spacing=0.03,
-                subplot_titles=("MACD Line & Signal", "MACD Histogram"),
-                row_heights=[0.7, 0.3],
+        fig.add_trace(
+            go.Scatter(
+                x=data.index,
+                y=data["BBM_20_2.0"],
+                name="Middle Band",
+                line=dict(color="blue"),
             )
+        )
 
-            # MACD and Signal lines
-            fig_macd.add_trace(
-                go.Scatter(
-                    x=df.index,
-                    y=df["MACD_12_26_9"],
-                    name="MACD",
-                    line=dict(color="blue", width=1),
-                ),
-                row=1,
-                col=1,
+        fig.add_trace(
+            go.Scatter(
+                x=data.index,
+                y=data["BBL_20_2.0"],
+                name="Lower Band",
+                line=dict(color="gray"),
             )
+        )
 
-            fig_macd.add_trace(
-                go.Scatter(
-                    x=df.index,
-                    y=df["MACDs_12_26_9"],
-                    name="Signal",
-                    line=dict(color="orange", width=1),
-                ),
-                row=1,
-                col=1,
+        fig.add_trace(
+            go.Scatter(
+                x=data.index,
+                y=data["Close"],
+                name="Close Price",
+                line=dict(color="black"),
             )
+        )
 
-            # MACD Histogram
-            colors = ["red" if x < 0 else "green" for x in df["MACDh_12_26_9"]]
-            fig_macd.add_trace(
-                go.Bar(
-                    x=df.index,
-                    y=df["MACDh_12_26_9"],
-                    name="Histogram",
-                    marker_color=colors,
-                ),
-                row=2,
-                col=1,
-            )
+        fig.update_layout(title="Bollinger Bands", height=400)
 
-            fig_macd.update_layout(
-                title="Moving Average Convergence Divergence (MACD)",
-                height=500,
-                template="plotly_white",
-                showlegend=True,
-                legend=dict(
-                    orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1
-                ),
-            )
-            st.plotly_chart(fig_macd, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True)
 
-        # Bollinger Bands
-        if all(col in df.columns for col in ["BBU_20_2.0", "BBM_20_2.0", "BBL_20_2.0"]):
-            fig_bb = go.Figure()
+    def _display_insights(self, insights: Dict[str, Any]):
+        """Display analysis insights"""
+        st.subheader("Analysis Insights")
 
-            # Add Bollinger Bands
-            fig_bb.add_trace(
-                go.Scatter(
-                    x=df.index,
-                    y=df["BBU_20_2.0"],
-                    name="Upper Band",
-                    line=dict(color="gray", dash="dash"),
-                )
-            )
-
-            fig_bb.add_trace(
-                go.Scatter(
-                    x=df.index,
-                    y=df["BBM_20_2.0"],
-                    name="Middle Band",
-                    line=dict(color="blue"),
-                )
-            )
-
-            fig_bb.add_trace(
-                go.Scatter(
-                    x=df.index,
-                    y=df["BBL_20_2.0"],
-                    name="Lower Band",
-                    line=dict(color="gray", dash="dash"),
-                )
-            )
-
-            # Add price
-            fig_bb.add_trace(
-                go.Scatter(
-                    x=df.index,
-                    y=df["Close"],
-                    name="Close Price",
-                    line=dict(color="black"),
-                )
-            )
-
-            fig_bb.update_layout(
-                title="Bollinger Bands",
-                height=400,
-                template="plotly_white",
-                showlegend=True,
-                legend=dict(
-                    orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1
-                ),
-            )
-            st.plotly_chart(fig_bb, use_container_width=True)
-
-    def render_statistics_tab(self, analysis: Dict[str, Any]):
-        """Render statistics tab content"""
-        st.subheader("Statistical Analysis")
-
+        # Create columns for different metrics
         col1, col2 = st.columns(2)
 
         with col1:
-            st.write("Daily Returns")
-            stats = analysis["insights"]["statistics"]["daily_returns"]
-            st.write(f"Mean: {stats['mean']:.4f}")
-            st.write(f"Std Dev: {stats['std']:.4f}")
-            st.write(f"Skewness: {stats['skew']:.4f}")
+            st.write("Price Statistics")
+            stats = insights.get("statistics", {})
+            if stats:
+                st.metric(
+                    "Current Price",
+                    f"${stats['current_price']:.2f}",
+                    f"{stats['price_change']['1d']:.2f}%",
+                )
 
-        with col2:
-            st.write("Risk Metrics")
-            risk = analysis["insights"]["risk_metrics"]
-            st.write(f"Value at Risk (95%): {risk['var_95']:.4f}")
-            st.write(f"Max Drawdown: {risk['max_drawdown']:.4f}")
-            st.write(f"Sharpe Ratio: {risk['sharpe_ratio']:.4f}")
-
-    def render_insights_tab(self, analysis: Dict[str, Any]):
-        """Render insights tab content"""
-        st.subheader("Trading Insights")
-
-        # Trading signals
-        st.write("Trading Signals")
-        for signal in analysis["insights"]["signals"]:
-            st.info(signal)
-
-        # Trend analysis
-        st.write("Trend Analysis")
-        trend = analysis["insights"]["trend_analysis"]
-        cols = st.columns(3)
-        cols[0].metric("Short-term Trend", trend["short_term"])
-        cols[1].metric("Medium-term Trend", trend["medium_term"])
-        cols[2].metric("Trend Strength", trend["strength"])
-
-        # Support/Resistance levels
-        st.write("Key Price Levels")
-        levels = analysis["insights"]["key_levels"]
-        st.write(f"Support: ${levels['support'][0]:.2f}")
-        st.write(f"Resistance: ${levels['resistance'][0]:.2f}")
-
-    def run(self):
-        """Run the Streamlit application"""
-        self.render_sidebar()
-        self.render_main_content()
+    def send_email_report(self, email: str, symbol: str, period: str) -> bool:
+        """Send email report with PDF attachment"""
+        try:
+            data = self.fetch_stock_data(symbol, period)
+            insights = self.fetch_analysis(symbol, period)
+            if data is not None and insights is not None:
+                html_content = self.email_service.create_market_summary(
+                    {"symbol": symbol, "data": data}, insights
+                )
+                pdf_path = f"reports/{symbol}_{datetime.now().strftime('%Y%m%d')}.pdf"
+                self.email_service.generate_pdf_report(html_content, pdf_path)
+                success = self.email_service.send_report(
+                    recipient_email=email,
+                    subject=f"Market Analysis Report - {symbol}",
+                    html_content=html_content,
+                    attachments=[pdf_path],
+                )
+                return success
+            else:
+                return False
+        except Exception as e:
+            st.error(f"Error sending email report: {str(e)}")
+            return False
 
 
-# Run the application
+# Run the dashboard
 if __name__ == "__main__":
     app = FinancialDashboardApp()
-    app.run()
-    
+    app.render_sidebar()
+    app.render_main_content()
