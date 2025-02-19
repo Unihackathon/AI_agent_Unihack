@@ -10,7 +10,8 @@ from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.messages import HumanMessage, AIMessage
-from langchain.memory import ChatMessageHistory
+# from langchain.memory import ChatMessageHistory
+from langchain_community.chat_message_histories import ChatMessageHistory
 from dotenv import load_dotenv
 
 from data_collection import FinancialDataCollector
@@ -169,6 +170,14 @@ if __name__ == "__main__":
     # Test some example queries
     test_queries = [
         "What is the current trend for Tesla stock?",
+        "which stock has the highest volatility?",
+        "what is the average daily return for Tesla stock?",
+        "what is the maximum drawdown for Tesla stock?",
+        "what is the value at risk for Tesla stock?",
+        "what is the sharpe ratio for Tesla stock?",
+        "what is the beta for Tesla stock?",
+        "what is the correlation between Tesla and Apple stock?",
+        "what is the correlation between Tesla and Amazon stock?",
     ]
 
     for query in test_queries:

@@ -9,6 +9,7 @@ import numpy as np
 from data_collection import FinancialDataCollector
 from data_analysis import FinancialAnalyzer
 from conversation import FinancialChatbot
+from email_service import EmailReportService
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -21,6 +22,9 @@ app = FastAPI(
 collector = FinancialDataCollector()
 analyzer = FinancialAnalyzer()
 chatbot = FinancialChatbot()
+
+# Initialize email service
+email_service = EmailReportService()
 
 
 # Pydantic models for request/response
@@ -41,6 +45,20 @@ class AnalysisResponse(BaseModel):
     symbol: str
     data: Dict[str, Any]
     insights: Dict[str, Any]
+
+
+class EmailReportRequest(BaseModel):
+    email: str
+    symbol: str
+    period: str = "1d"
+    report_type: str = "summary"  # summary, detailed, custom
+
+
+class ScheduleReportRequest(BaseModel):
+    email: str
+    symbol: str
+    frequency: str = "daily"  # daily, weekly
+    time: str = "16:30"  # HH:MM format
 
 
 @app.get("/")
@@ -195,6 +213,59 @@ async def get_conversation_history():
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Error fetching conversation history: {str(e)}"
+        )
+
+
+@app.post("/api/reports/email")
+async def send_email_report(request: EmailReportRequest):
+    """Send email report for a stock"""
+    try:
+        # Get stock data and analysis
+        data = collector.get_stock_data(request.symbol, request.period)
+        insights = analyzer.generate_insights(request.symbol, request.period)
+
+        # Create report content
+        html_content = email_service.create_market_summary(
+            {"symbol": request.symbol}, insights
+        )
+
+        # Send email
+        success = email_service.send_report(
+            recipient_email=request.email,
+            subject=f"Market Analysis Report - {request.symbol}",
+            html_content=html_content,
+        )
+
+        if not success:
+            raise HTTPException(status_code=500, detail="Failed to send email report")
+
+        return {"status": "success", "message": f"Report sent to {request.email}"}
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error generating report: {str(e)}"
+        )
+
+
+@app.post("/api/reports/schedule")
+async def schedule_email_report(request: ScheduleReportRequest):
+    """Schedule periodic email reports"""
+    try:
+        email_service.schedule_report(
+            email=request.email,
+            symbol=request.symbol,
+            frequency=request.frequency,
+            time=request.time,
+        )
+
+        return {
+            "status": "success",
+            "message": f"Scheduled {request.frequency} report for {request.symbol} at {request.time}",
+        }
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error scheduling report: {str(e)}"
         )
 
 
