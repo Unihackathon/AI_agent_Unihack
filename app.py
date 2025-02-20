@@ -5,7 +5,7 @@ from datetime import datetime
 import plotly.graph_objects as go
 from typing import Dict, Any
 from plotly.subplots import make_subplots
-
+import os
 from data_collection import FinancialDataCollector
 from data_analysis import FinancialAnalyzer  # Import FinancialAnalyzer
 from email_service import EmailReportService  # Correct import
@@ -14,7 +14,7 @@ from email_service import EmailReportService  # Correct import
 st.set_page_config(page_title="Financial Data Analyzer", page_icon="📈", layout="wide")
 
 # Constants
-API_BASE_URL = "http://localhost:8000"
+API_BASE_URL = os.getenv("BASE_URL")
 
 
 class FinancialDashboardApp:
