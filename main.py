@@ -5,6 +5,7 @@ from typing import Dict, Any, List, Optional
 import asyncio
 from datetime import datetime
 import numpy as np
+import math
 
 from fastapi.responses import HTMLResponse
 from data_collection import FinancialDataCollector
@@ -63,6 +64,15 @@ class ScheduleReportRequest(BaseModel):
 
 app = FastAPI()
 
+def sanitize_data(data):
+    """Recursively replaces NaN, inf, -inf with valid values."""
+    if isinstance(data, dict):
+        return {k: sanitize_data(v) for k, v in data.items()}
+    elif isinstance(data, list):
+        return [sanitize_data(v) for v in data]
+    elif isinstance(data, float) and (math.isnan(data) or math.isinf(data)):
+        return None  # or use 0, "Infinity", etc.
+    return data
 
 @app.get("/", response_class=HTMLResponse)
 async def root(request: Request):
@@ -154,7 +164,8 @@ async def get_stock_analysis(request: StockRequest):
         # Convert numpy types and handle NaN values in both data and insights
         data_dict = [convert_to_native_types(record) for record in data_dict]
         insights = convert_to_native_types(insights)
-
+        data_dict=sanitize_data(data_dict)
+        insights=sanitize_data(insights)
         response_data = {
             "timestamp": datetime.now().isoformat(),
             "symbol": request.symbol,
