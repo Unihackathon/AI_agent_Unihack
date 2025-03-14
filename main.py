@@ -1,5 +1,5 @@
 import uvicorn
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
 from typing import Dict, Any, List, Optional
 import asyncio
@@ -61,17 +61,31 @@ class ScheduleReportRequest(BaseModel):
     time: str = "16:30"  # HH:MM format
 
 
-@app.get("/")
-async def root():
+@app.get(
+    "/",
+    summary="Root endpoint",
+    description="Returns a welcome message with links to the documentation.",
+)
+async def root(request: Request):
     """Root endpoint"""
+    base_url = str(request.base_url)
     return {
-        "message": "Financial Data Analysis API",
+        "message": "Welcome to the Financial Data Analysis API!",
         "version": "1.0.0",
         "status": "active",
+        "documentation": [
+            {"Swagger UI": f"{base_url}docs"},
+            {"ReDoc": f"{base_url}redoc"},
+        ],
     }
 
 
-@app.post("/api/stock/data", response_model=Dict[str, Any])
+@app.post(
+    "/api/stock/data",
+    response_model=Dict[str, Any],
+    summary="Get stock data",
+    description="Retrieves historical stock data for a given symbol.",
+)
 async def get_stock_data(request: StockRequest):
     """Get stock data for a given symbol"""
     try:
@@ -103,7 +117,11 @@ async def get_stock_data(request: StockRequest):
         )
 
 
-@app.post("/api/stock/analysis")
+@app.post(
+    "/api/stock/analysis",
+    summary="Get stock analysis",
+    description="Provides comprehensive analysis for a given stock.",
+)
 async def get_stock_analysis(request: StockRequest):
     """Get comprehensive analysis for a stock"""
     try:
@@ -165,7 +183,12 @@ async def get_stock_analysis(request: StockRequest):
         )
 
 
-@app.post("/api/crypto/data", response_model=Dict[str, Any])
+@app.post(
+    "/api/crypto/data",
+    response_model=Dict[str, Any],
+    summary="Get cryptocurrency data",
+    description="Retrieves cryptocurrency data for a given symbol.",
+)
 async def get_crypto_data(symbol: str = "btcusd"):
     """Get cryptocurrency data"""
     try:
@@ -184,7 +207,12 @@ async def get_crypto_data(symbol: str = "btcusd"):
         )
 
 
-@app.post("/api/query", response_model=Dict[str, Any])
+@app.post(
+    "/api/query",
+    response_model=Dict[str, Any],
+    summary="Process natural language query",
+    description="Processes a natural language query about financial data.",
+)
 async def process_query(request: QueryRequest):
     """Process a natural language query about financial data"""
     try:
@@ -203,7 +231,12 @@ async def process_query(request: QueryRequest):
         raise HTTPException(status_code=500, detail=f"Error processing query: {str(e)}")
 
 
-@app.get("/api/conversation/history", response_model=Dict[str, Any])
+@app.get(
+    "/api/conversation/history",
+    response_model=Dict[str, Any],
+    summary="Get conversation history",
+    description="Retrieves the history of the conversation with the chatbot.",
+)
 async def get_conversation_history():
     """Get conversation history"""
     try:
@@ -216,7 +249,11 @@ async def get_conversation_history():
         )
 
 
-@app.post("/api/reports/email")
+@app.post(
+    "/api/reports/email",
+    summary="Send email report",
+    description="Sends an email report for a given stock.",
+)
 async def send_email_report(request: EmailReportRequest):
     """Send email report for a stock"""
     try:
@@ -247,7 +284,11 @@ async def send_email_report(request: EmailReportRequest):
         )
 
 
-@app.post("/api/reports/schedule")
+@app.post(
+    "/api/reports/schedule",
+    summary="Schedule email report",
+    description="Schedules periodic email reports.",
+)
 async def schedule_email_report(request: ScheduleReportRequest):
     """Schedule periodic email reports"""
     try:
