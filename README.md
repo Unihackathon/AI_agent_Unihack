@@ -3,6 +3,14 @@
 ## Overview
 The AI Financial Analyst project is designed to assist financial analysts by leveraging artificial intelligence to analyze financial data. This application gathers, processes, and analyzes financial information to provide insights and predictions that can aid in decision-making. The project uses `yfinance` for data collection, `Streamlit` for the frontend, and `FastAPI` for the backend.
 
+## API Documentation
+The backend exposes multiple endpoints for financial data analysis. You can access the API documentation here:  
+
+- **Swagger UI:** [/docs](/docs)  
+- **ReDoc:** [/redoc](/redoc)  
+
+Replace `localhost:8000` with your deployment URL if running on a server.
+
 ## Project Structure
 ```
 ai-financial-analyst
@@ -63,7 +71,6 @@ To run the Streamlit application, execute the following command:
 streamlit run app.py
 ```
 This will start the frontend application where you can interact with the financial data analysis dashboard.
-
 
 #### U.S. Stock Market:
 - **Technology:**
@@ -154,4 +161,3 @@ This project is licensed under the MIT License. See the LICENSE file for details
 ## Acknowledgments
 - [Your Name or Organization] - for the development and maintenance of this project.
 - Any libraries or resources used in the project.
-

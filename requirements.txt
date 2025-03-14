@@ -22,4 +22,5 @@ langchain-core>=0.1.0
 langchain-google-genai>=0.0.6
 apscheduler>=3.10.1
 jinja2>=3.1.2
+markdown
 pdfkit>=1.0.0
