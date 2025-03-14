@@ -159,5 +159,5 @@ Contributions are welcome! If you would like to contribute to the project, pleas
 This project is licensed under the MIT License. See the LICENSE file for details.
 
 ## Acknowledgments
-- [Your Name or Organization] - for the development and maintenance of this project.
+- [Adane Moges](adanemoges6@gmail.com)- for the development and maintenance of this project.
 - Any libraries or resources used in the project.

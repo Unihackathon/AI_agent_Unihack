@@ -6,6 +6,7 @@ import asyncio
 from datetime import datetime
 import numpy as np
 
+from fastapi.responses import HTMLResponse
 from data_collection import FinancialDataCollector
 from data_analysis import FinancialAnalyzer
 from conversation import FinancialChatbot
@@ -59,11 +60,6 @@ class ScheduleReportRequest(BaseModel):
     symbol: str
     frequency: str = "daily"  # daily, weekly
     time: str = "16:30"  # HH:MM format
-
-
-from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
-import markdown
 
 app = FastAPI()
 
