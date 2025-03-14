@@ -62,7 +62,9 @@ class ScheduleReportRequest(BaseModel):
     frequency: str = "daily"  # daily, weekly
     time: str = "16:30"  # HH:MM format
 
+
 app = FastAPI()
+
 
 def sanitize_data(data):
     """Recursively replaces NaN, inf, -inf with valid values."""
@@ -74,13 +76,16 @@ def sanitize_data(data):
         return None  # or use 0, "Infinity", etc.
     return data
 
+
 @app.get("/", response_class=HTMLResponse)
 async def root(request: Request):
     """Serve a well-styled API documentation landing page"""
-   
+
     with open("index.html", "r") as file:
         content = file.read()
     return HTMLResponse(content=content)
+
+
 @app.post(
     "/api/stock/data",
     response_model=Dict[str, Any],
@@ -164,8 +169,8 @@ async def get_stock_analysis(request: StockRequest):
         # Convert numpy types and handle NaN values in both data and insights
         data_dict = [convert_to_native_types(record) for record in data_dict]
         insights = convert_to_native_types(insights)
-        data_dict=sanitize_data(data_dict)
-        insights=sanitize_data(insights)
+        data_dict = sanitize_data(data_dict)
+        insights = sanitize_data(insights)
         response_data = {
             "timestamp": datetime.now().isoformat(),
             "symbol": request.symbol,
@@ -218,10 +223,13 @@ async def get_crypto_data(symbol: str = "btcusd"):
 async def process_query(request: QueryRequest):
     """Process a natural language query about financial data"""
     try:
+        print(
+            f"Received query: {request.query}, symbol: {request.symbol}, period: {request.period}"
+        )
+
         response = chatbot.process_query(
             query=request.query, symbol=request.symbol, period=request.period
         )
-
         return {
             "timestamp": datetime.now(),
             "query": request.query,
@@ -230,7 +238,12 @@ async def process_query(request: QueryRequest):
         }
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error processing query: {str(e)}")
+        import traceback
+
+        error_message = f"Error processing query: {str(e)}"
+        print(error_message)
+        traceback.print_exc()  # Print the full traceback
+        raise HTTPException(status_code=500, detail=error_message)
 
 
 @app.get(
@@ -265,7 +278,7 @@ async def send_email_report(request: EmailReportRequest):
 
         # Create report content
         html_content = email_service.create_market_summary(
-            {"symbol": request.symbol}, insights
+            dict(data), insights
         )
 
         # Send email
@@ -314,4 +327,5 @@ async def schedule_email_report(request: ScheduleReportRequest):
 
 # Run the application
 if __name__ == "__main__":
+
     uvicorn.run("main:app", host="0.0.0.0", port=5001, reload=True)

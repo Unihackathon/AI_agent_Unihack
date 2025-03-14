@@ -5,7 +5,8 @@ from datetime import datetime
 # from langchain.llms import GoogleGenerativeAI
 # from langchain_community.llms import GoogleGenerativeAI
 from langchain_google_genai import GoogleGenerativeAI
-
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_groq import ChatGroq
 from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
@@ -24,11 +25,7 @@ class FinancialChatbot:
     def __init__(self):
         self.collector = FinancialDataCollector()
         self.analyzer = FinancialAnalyzer()
-        self.llm = GoogleGenerativeAI(
-            model="gemini-pro",
-            google_api_key=os.getenv("GEMINI_API_KEY"),
-            temperature=0.7,
-        )
+        self.llm = ChatGroq(temperature=0.7, model_name="mixtral-8x7b-32768",groq_api_key=os.getenv("GROK_API_KEY"))
         self.chat_history = ChatMessageHistory()
         self._setup_chains()
 

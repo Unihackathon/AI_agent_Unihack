@@ -105,6 +105,7 @@ class FinancialAnalyzer:
             
             # Calculate indicators
             df = self.calculate_technical_indicators(df)
+            print("Fetching data...cripto")
             
             # Generate statistics
             stats = self.generate_statistics(df)
@@ -112,6 +113,7 @@ class FinancialAnalyzer:
             # Generate trading signals
             signals = self._generate_trading_signals(df)
             
+            print(df, "\nstats\n",stats, "signals\n",signals)
             # Identify key levels
             support, resistance = self._identify_key_levels(df)
             
