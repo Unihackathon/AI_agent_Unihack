@@ -71,73 +71,10 @@ app = FastAPI()
 @app.get("/", response_class=HTMLResponse)
 async def root(request: Request):
     """Serve a well-styled API documentation landing page"""
-    base_url = str(request.base_url).rstrip("/")
-
-    html_content = f"""
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>API Documentation</title>
-        <style>
-            body {{
-                font-family: 'Arial', sans-serif;
-                margin: 0;
-                padding: 0;
-                background-color: #f8f9fa;
-                color: #333;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                height: 100vh;
-            }}
-            .container {{
-                max-width: 600px;
-                text-align: center;
-                padding: 20px;
-                background: white;
-                border-radius: 10px;
-                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-            }}
-            h1 {{
-                color: #007bff;
-                margin-bottom: 10px;
-            }}
-            p {{
-                font-size: 16px;
-                line-height: 1.5;
-            }}
-            .links a {{
-                display: block;
-                margin: 10px 0;
-                padding: 10px;
-                background: #007bff;
-                color: white;
-                text-decoration: none;
-                border-radius: 5px;
-                transition: 0.3s;
-            }}
-            .links a:hover {{
-                background: #0056b3;
-            }}
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <h1>API Documentation</h1>
-            <p>The backend provides a structured API for financial data analysis and insights.</p>
-            <p>Explore the interactive documentation:</p>
-            <div class="links">
-                <a href="{base_url}/docs" target="_blank">Swagger UI</a>
-                <a href="{base_url}/redoc" target="_blank">ReDoc</a>
-            </div>
-        </div>
-    </body>
-    </html>
-    """
-
-    return html_content
+   
+    with open("index.html", "r") as file:
+        content = file.read()
+    return HTMLResponse(content=content)
 @app.post(
     "/api/stock/data",
     response_model=Dict[str, Any],
