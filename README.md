@@ -6,8 +6,8 @@ The AI Financial Analyst project is designed to assist financial analysts by lev
 ## API Documentation
 The backend exposes multiple endpoints for financial data analysis. You can access the API documentation here:  
 
-- **Swagger UI:** [/docs](/docs)  
-- **ReDoc:** [/redoc](/redoc)  
+- **Swagger UI:** [/docs](https://data-analist-agent.onrender.com/docs)  
+- **ReDoc:** [/redoc](https://data-analist-agent.onrender.com/redoc)  
 
 Replace `localhost:8000` with your deployment URL if running on a server.
 
