@@ -45,7 +45,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md space-y-8 p-8">
         <div className="text-center space-y-6">
           <h1 className="neon-text text-4xl">
-            AI Stock Trading
+            AI Stock Predicting
             <br />
             Agent
           </h1>

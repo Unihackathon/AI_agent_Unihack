@@ -20,7 +20,7 @@ export function DashboardSidebar() {
   return (
     <Sidebar>
       <SidebarHeader className="border-b border-[#00FF00]/30 p-4">
-        <h2 className="text-white text-xl">AI Stock Trading</h2>
+        <h2 className="text-white text-xl">AI Stock Predicting Agent</h2>
       </SidebarHeader>
 
       <SidebarContent>
@@ -30,7 +30,7 @@ export function DashboardSidebar() {
               asChild
               isActive={pathname === "/dashboard"}
               tooltip="Dashboard"
-              className="text-white hover:text-[#00FF00] hover:bg-[#00FF00]/10"
+              className={`text-white hover:text-[#00FF00] hover:bg-[#00FF00]/10 ${pathname === "/dashboard" ? "bg-[#00FF00] text-black" : ""}`}
             >
               <Link href="/dashboard">
                 <Home className="mr-2" />
@@ -44,7 +44,7 @@ export function DashboardSidebar() {
               asChild
               isActive={pathname === "/dashboard/market"}
               tooltip="Market Data"
-              className="text-white hover:text-[#00FF00] hover:bg-[#00FF00]/10"
+              className={`text-white hover:text-[#00FF00] hover:bg-[#00FF00]/10 ${pathname === "/dashboard/market" ? "bg-[#00FF00] text-black" : ""}`}
             >
               <Link href="/dashboard/market">
                 <LineChart className="mr-2" />
@@ -58,7 +58,7 @@ export function DashboardSidebar() {
               asChild
               isActive={pathname === "/dashboard/predictions"}
               tooltip="AI Predictions"
-              className="text-white hover:text-[#00FF00] hover:bg-[#00FF00]/10"
+              className={`text-white hover:text-[#00FF00] hover:bg-[#00FF00]/10 ${pathname === "/dashboard/predictions" ? "bg-[#00FF00] text-black" : ""}`}
             >
               <Link href="/dashboard/predictions">
                 <Zap className="mr-2" />
@@ -72,7 +72,7 @@ export function DashboardSidebar() {
               asChild
               isActive={pathname === "/dashboard/portfolio"}
               tooltip="Portfolio"
-              className="text-white hover:text-[#00FF00] hover:bg-[#00FF00]/10"
+              className={`text-white hover:text-[#00FF00] hover:bg-[#00FF00]/10 ${pathname === "/dashboard/portfolio" ? "bg-[#00FF00] text-black" : ""}`}
             >
               <Link href="/dashboard/portfolio">
                 <PieChart className="mr-2" />
@@ -86,7 +86,7 @@ export function DashboardSidebar() {
               asChild
               isActive={pathname === "/dashboard/wallet"}
               tooltip="Wallet"
-              className="text-white hover:text-[#00FF00] hover:bg-[#00FF00]/10"
+              className={`text-white hover:text-[#00FF00] hover:bg-[#00FF00]/10 ${pathname === "/dashboard/wallet" ? "bg-[#00FF00] text-black" : ""}`}
             >
               <Link href="/dashboard/wallet">
                 <Wallet className="mr-2" />
@@ -100,7 +100,7 @@ export function DashboardSidebar() {
               asChild
               isActive={pathname === "/dashboard/history"}
               tooltip="Trade History"
-              className="text-white hover:text-[#00FF00] hover:bg-[#00FF00]/10"
+              className={`text-white hover:text-[#00FF00] hover:bg-[#00FF00]/10 ${pathname === "/dashboard/history" ? "bg-[#00FF00] text-black" : ""}`}
             >
               <Link href="/dashboard/history">
                 <History className="mr-2" />
@@ -114,7 +114,7 @@ export function DashboardSidebar() {
               asChild
               isActive={pathname === "/dashboard/news"}
               tooltip="Market News"
-              className="text-white hover:text-[#00FF00] hover:bg-[#00FF00]/10"
+              className={`text-white hover:text-[#00FF00] hover:bg-[#00FF00]/10 ${pathname === "/dashboard/news" ? "bg-[#00FF00] text-black" : ""}`}
             >
               <Link href="/dashboard/news">
                 <BookOpen className="mr-2" />
@@ -132,7 +132,7 @@ export function DashboardSidebar() {
               asChild
               isActive={pathname === "/dashboard/notifications"}
               tooltip="Notifications"
-              className="text-white hover:text-[#00FF00] hover:bg-[#00FF00]/10"
+              className={`text-white hover:text-[#00FF00] hover:bg-[#00FF00]/10 ${pathname === "/dashboard/notifications" ? "bg-[#00FF00] text-black" : ""}`}
             >
               <Link href="/dashboard/notifications">
                 <Bell className="mr-2" />
@@ -146,7 +146,7 @@ export function DashboardSidebar() {
               asChild
               isActive={pathname === "/dashboard/settings"}
               tooltip="Settings"
-              className="text-white hover:text-[#00FF00] hover:bg-[#00FF00]/10"
+              className={`text-white hover:text-[#00FF00] hover:bg-[#00FF00]/10 ${pathname === "/dashboard/settings" ? "bg-[#00FF00] text-black" : ""}`}
             >
               <Link href="/dashboard/settings">
                 <Settings className="mr-2" />

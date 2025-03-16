@@ -13,7 +13,7 @@ export default function Home() {
     <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-black text-white">
       <div className="text-center space-y-6 mb-12">
         <h1 className="text-[#00FF00] text-5xl md:text-6xl font-bold">
-          AI Stock Trading
+          AI Stock Predicting
           <br />
           Agent
         </h1>
