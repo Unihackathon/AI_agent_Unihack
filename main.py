@@ -1,3 +1,5 @@
+import uuid
+import os
 import uvicorn
 from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
@@ -6,6 +8,8 @@ import asyncio
 from datetime import datetime
 import numpy as np
 import math
+from convert_html_to_pdf import convert_html_to_pdf
+
 
 from fastapi.responses import HTMLResponse
 from data_collection import FinancialDataCollector
@@ -52,7 +56,7 @@ class AnalysisResponse(BaseModel):
 class EmailReportRequest(BaseModel):
     email: str
     symbol: str
-    period: str = "1d"
+    period: str = "3mo"
     report_type: str = "summary"  # summary, detailed, custom
 
 
@@ -223,9 +227,9 @@ async def get_crypto_data(symbol: str = "btcusd"):
 async def process_query(request: QueryRequest):
     """Process a natural language query about financial data"""
     try:
-        print(
-            f"Received query: {request.query}, symbol: {request.symbol}, period: {request.period}"
-        )
+        # print(
+        #     f"Received query: {request.query}, symbol: {request.symbol}, period: {request.period}"
+        # )
 
         response = chatbot.process_query(
             query=request.query, symbol=request.symbol, period=request.period
@@ -274,14 +278,26 @@ async def send_email_report(request: EmailReportRequest):
     try:
         # Get stock data and analysis
         data = collector.get_stock_data(request.symbol, request.period)
+        if data is None:
+            raise HTTPException(status_code=404, detail=f"No data found for symbol {request.symbol}")
+
         insights = analyzer.generate_insights(request.symbol, request.period)
+        if insights is None:
+            raise HTTPException(status_code=500, detail="Failed to generate insights")
+        data_dict = {
+            "data": data.to_dict(orient='records'),
+            "symbol": request.symbol,
+            "timestamp": datetime.now().isoformat()
+        }
 
         # Create report content
-        html_content = email_service.create_market_summary(
-            dict(data), insights
-        )
-
+        html_content = email_service.create_market_summary(data_dict, insights)
+        if html_content is None:
+            raise HTTPException(status_code=500, detail="Failed to create report content")
+        
+       
         # Send email
+        
         success = email_service.send_report(
             recipient_email=request.email,
             subject=f"Market Analysis Report - {request.symbol}",

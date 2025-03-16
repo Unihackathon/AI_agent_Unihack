@@ -113,6 +113,9 @@ class FinancialDataCollector:
         stock_data = self.get_stock_data(stock_symbol)
         crypto_data = self.get_crypto_data(crypto_symbol)
 
+
+    
+
         return {"stock_data": stock_data, "crypto_data": crypto_data}
 
 
