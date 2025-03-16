@@ -9,7 +9,7 @@ from datetime import datetime
 import numpy as np
 import math
 from convert_html_to_pdf import convert_html_to_pdf
-
+from fastapi.middleware.cors import CORSMiddleware
 
 from fastapi.responses import HTMLResponse
 from data_collection import FinancialDataCollector
@@ -22,6 +22,14 @@ app = FastAPI(
     title="Financial Data Analysis API",
     description="API for analyzing financial data and providing insights",
     version="1.0.0",
+)
+# Allow all CORS requests
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods (GET, POST, PUT, DELETE, etc.)
+    allow_headers=["*"],  # Allows all headers
 )
 
 # Initialize components
