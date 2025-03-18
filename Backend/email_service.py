@@ -1,8 +1,10 @@
+import asyncio
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
 import smtplib
 from typing import Dict, Any, List, Optional
+import uuid
 import pandas as pd
 from datetime import datetime
 import plotly.graph_objects as go
@@ -14,6 +16,8 @@ from dotenv import load_dotenv
 import pdfkit
 from apscheduler.schedulers.background import BackgroundScheduler
 import numpy as np
+
+from convert_html_to_pdf import convert_html_to_pdf
 
 
 class EmailReportService:
@@ -186,11 +190,14 @@ class EmailReportService:
         }
 
     def create_market_summary(
-        self, data: Dict[str, Any], insights: Dict[str, Any]
+        self, data, insights: Dict[str, Any]
     ) -> str:
         """Create HTML market summary with enhanced charts"""
         try:
-            df = pd.DataFrame(data.get("data", []))
+            df = pd.DataFrame(data["data"])
+            print("############################# start")
+            
+            print(df.head())
 
             # Generate price chart
             fig_price = go.Figure()
@@ -206,7 +213,6 @@ class EmailReportService:
                     name="OHLC",
                 )
             )
-
             # Add moving averages
             for ma in ["SMA_20", "SMA_50"]:
                 if ma in df.columns:
@@ -220,7 +226,6 @@ class EmailReportService:
                             ),
                         )
                     )
-
             # Update layout
             fig_price.update_layout(
                 title=f"{data['symbol']} Price Chart",
@@ -234,70 +239,70 @@ class EmailReportService:
             # Convert price chart to HTML
             price_chart_html = pio.to_html(fig_price, full_html=False)
 
-            # Generate RSI chart
-            fig_rsi = go.Figure()
-            if "RSI" in df.columns:
-                fig_rsi.add_trace(
-                    go.Scatter(
-                        x=df.index,
-                        y=df["RSI"],
-                        name="RSI",
-                        line=dict(color="purple", width=1),
-                    )
-                )
-                fig_rsi.add_hline(y=70, line_dash="dash", line_color="red")
-                fig_rsi.add_hline(y=30, line_dash="dash", line_color="green")
-                fig_rsi.update_layout(
-                    title="Relative Strength Index (RSI)",
-                    yaxis_title="RSI",
-                    template="plotly_white",
-                    height=400,
-                )
+            # # Generate RSI chart
+            # fig_rsi = go.Figure()
+            # if "RSI" in df.columns:
+            #     fig_rsi.add_trace(
+            #         go.Scatter(
+            #             x=df.index,
+            #             y=df["RSI"],
+            #             name="RSI",
+            #             line=dict(color="purple", width=1),
+            #         )
+            #     )
+            #     fig_rsi.add_hline(y=70, line_dash="dash", line_color="red")
+            #     fig_rsi.add_hline(y=30, line_dash="dash", line_color="green")
+            #     fig_rsi.update_layout(
+            #         title="Relative Strength Index (RSI)",
+            #         yaxis_title="RSI",
+            #         template="plotly_white",
+            #         height=400,
+            #     )
 
-            # Convert RSI chart to HTML
-            rsi_chart_html = pio.to_html(fig_rsi, full_html=False)
+            # # Convert RSI chart to HTML
+            # rsi_chart_html = pio.to_html(fig_rsi, full_html=False)
 
-            # Generate MACD chart
-            fig_macd = make_subplots(rows=2, cols=1, shared_xaxes=True)
-            if all(col in df.columns for col in ["MACD_12_26_9", "MACDs_12_26_9", "MACDh_12_26_9"]):
-                fig_macd.add_trace(
-                    go.Scatter(
-                        x=df.index,
-                        y=df["MACD_12_26_9"],
-                        name="MACD",
-                        line=dict(color="blue", width=1),
-                    ),
-                    row=1,
-                    col=1,
-                )
-                fig_macd.add_trace(
-                    go.Scatter(
-                        x=df.index,
-                        y=df["MACDs_12_26_9"],
-                        name="Signal",
-                        line=dict(color="red", width=1),
-                    ),
-                    row=1,
-                    col=1,
-                )
-                fig_macd.add_trace(
-                    go.Bar(
-                        x=df.index,
-                        y=df["MACDh_12_26_9"],
-                        name="MACD Histogram",
-                        marker_color="green",
-                    ),
-                    row=2,
-                    col=1,
-                )
-                fig_macd.update_layout(
-                    title="Moving Average Convergence Divergence (MACD)",
-                    template="plotly_white",
-                    height=600,
-                )
+            # # Generate MACD chart
+            # fig_macd = make_subplots(rows=2, cols=1, shared_xaxes=True)
+            # if all(col in df.columns for col in ["MACD_12_26_9", "MACDs_12_26_9", "MACDh_12_26_9"]):
+            #     fig_macd.add_trace(
+            #         go.Scatter(
+            #             x=df.index,
+            #             y=df["MACD_12_26_9"],
+            #             name="MACD",
+            #             line=dict(color="blue", width=1),
+            #         ),
+            #         row=1,
+            #         col=1,
+            #     )
+            #     fig_macd.add_trace(
+            #         go.Scatter(
+            #             x=df.index,
+            #             y=df["MACDs_12_26_9"],
+            #             name="Signal",
+            #             line=dict(color="red", width=1),
+            #         ),
+            #         row=1,
+            #         col=1,
+            #     )
+            #     fig_macd.add_trace(
+            #         go.Bar(
+            #             x=df.index,
+            #             y=df["MACDh_12_26_9"],
+            #             name="MACD Histogram",
+            #             marker_color="green",
+            #         ),
+            #         row=2,
+            #         col=1,
+            #     )
+            #     fig_macd.update_layout(
+            #         title="Moving Average Convergence Divergence (MACD)",
+            #         template="plotly_white",
+            #         height=600,
+            #     )
 
-            # Convert MACD chart to HTML
-            macd_chart_html = pio.to_html(fig_macd, full_html=False)
+            # # Convert MACD chart to HTML
+            # macd_chart_html = pio.to_html(fig_macd, full_html=False)
 
             # Generate Bollinger Bands chart
             fig_bb = go.Figure()
@@ -355,11 +360,12 @@ class EmailReportService:
                 risk=insights["risk_metrics"],
                 alerts=alerts,
                 price_chart=price_chart_html,
-                rsi_chart=rsi_chart_html,
-                macd_chart=macd_chart_html,
+                # rsi_chart=rsi_chart_html,
+                # macd_chart=macd_chart_html,
                 bb_chart=bb_chart_html,
             )
-
+            
+            print("############################# end")
             return html_content
 
         except Exception as e:
@@ -480,8 +486,19 @@ class EmailReportService:
 
             # Attach HTML content
             msg.attach(MIMEText(html_content, "html"))
-
+            pdf_filename = f"report_{uuid.uuid4()}.html"
+            with open(pdf_filename, "w") as file:
+                file.write(html_content)
             # Attach files
+            with open(pdf_filename, "rb") as f:
+                        part = MIMEApplication(
+                            f.read(), Name=os.path.basename(pdf_filename)
+                        )
+                        part["Content-Disposition"] = (
+                            f'attachment; filename="{os.path.basename(pdf_filename)}"'
+                        )
+                        msg.attach(part)
+
             if attachments:
                 for file_path in attachments:
                     with open(file_path, "rb") as f:
@@ -492,11 +509,13 @@ class EmailReportService:
                             f'attachment; filename="{os.path.basename(file_path)}"'
                         )
                         msg.attach(part)
+            
             # Connect to SMTP server
             with smtplib.SMTP_SSL(self.smtp_server, self.smtp_port) as server:
                 server.login(self.sender_email, self.sender_password)
                 server.send_message(msg)
 
+            os.remove(pdf_filename)
             return True
         except Exception as e:
             print(f"Error sending email: {str(e)}")
