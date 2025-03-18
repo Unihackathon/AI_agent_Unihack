@@ -237,6 +237,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - [React](https://reactjs.org/) for the frontend interface
 - [Plotly](https://plotly.com/) for interactive charts
 - [pandas-ta](https://github.com/twopirllc/pandas-ta) for technical analysis
+- [n8n](https://n8n.io/) for workflow automation
 
 ## ⚠️ Disclaimer
 
