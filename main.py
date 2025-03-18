@@ -23,13 +23,13 @@ app = FastAPI(
     description="API for analyzing financial data and providing insights",
     version="1.0.0",
 )
-# Allow all CORS requests
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*","https://ai-stock-trading-predict.vercel.app"],  # Allows all origins
+    allow_origins=["https://ai-stock-trading-predict.vercel.app"],  # Frontend URL
     allow_credentials=True,
-    allow_methods=["*"],  # Allows all methods (GET, POST, PUT, DELETE, etc.)
-    allow_headers=["*"],  # Allows all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Initialize components
