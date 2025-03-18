@@ -1,0 +1,354 @@
+{
+  "name": "My workflow 4",
+  "nodes": [
+    {
+      "parameters": {
+        "public": true,
+        "mode": "webhook",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -280,
+        20
+      ],
+      "name": "Chat Interface",
+      "webhookId": "bitcoin-chat-webhook",
+      "id": "5d21a219-fe52-4561-86cc-9e0753302db1",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Chat Interface').item.json.sessionId }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -60,
+        360
+      ],
+      "name": "Chat Memory",
+      "id": "ca6f9e76-4de2-4a11-b0c6-1722b174411b",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.chatInput}} ",
+        "options": {
+          "systemMessage": "respond with simple message",
+          "passthroughBinaryImages": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        0,
+        0
+      ],
+      "name": "AI Agent1",
+      "id": "1c7a53c0-479f-4b4e-a464-fe9e17c42a35",
+      "executeOnce": false,
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "model": "qwen-2.5-32b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        200
+      ],
+      "id": "14b81bc9-f64a-4832-96cf-68af8e4eec4a",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "XBk8CpOeuXHrk7Kc",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $fromAI('To', ``, 'string') }}",
+        "subject": "={{ $fromAI('Subject', ``, 'string') }}",
+        "emailType": "text",
+        "message": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Message', ``, 'string') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.1,
+      "position": [
+        320,
+        400
+      ],
+      "id": "231f1cde-35be-445a-ba02-e5eff5c279c5",
+      "name": "Gmail1",
+      "webhookId": "18fe5d0f-8962-44b1-acae-14675d35ef86",
+      "notesInFlow": false,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "yBfpmelojDmNyOEi",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "you can find the bitcoin price here",
+        "url": "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd"
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [
+        580,
+        200
+      ],
+      "id": "f3a9ebe7-bab4-4fa0-a130-f93b46af002c",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1BTOjppl-kBObtQEUkaTA3cX_t2LvIMhOZt_aV7Vhm4s",
+          "mode": "list",
+          "cachedResultName": "User Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BTOjppl-kBObtQEUkaTA3cX_t2LvIMhOZt_aV7Vhm4s/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BTOjppl-kBObtQEUkaTA3cX_t2LvIMhOZt_aV7Vhm4s/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.5,
+      "position": [
+        60,
+        380
+      ],
+      "id": "3e96e370-bbc7-4693-b7dd-7bc4fc093741",
+      "name": "read email here",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "4oBGkjSIxrHHFD8g",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1BTOjppl-kBObtQEUkaTA3cX_t2LvIMhOZt_aV7Vhm4s",
+          "mode": "list",
+          "cachedResultName": "User Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BTOjppl-kBObtQEUkaTA3cX_t2LvIMhOZt_aV7Vhm4s/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BTOjppl-kBObtQEUkaTA3cX_t2LvIMhOZt_aV7Vhm4s/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "name": "={{ $fromAI(\"name\") }}",
+            "Email": "={{$fromAI(\"email\")}}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.5,
+      "position": [
+        500,
+        320
+      ],
+      "id": "51a3dbc4-37b0-43c6-ab2f-a709ea508446",
+      "name": "save email here",
+      "notesInFlow": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "4oBGkjSIxrHHFD8g",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "notes": "save name and email here\n"
+    },
+    {
+      "parameters": {
+        "toolDescription": "get the info about the data",
+        "method": "POST",
+        "url": "https://data-analist-agent.onrender.com/api/stock/analysis",
+        "sendBody": true,
+        "parametersBody": {
+          "values": [
+            {
+              "name": "symbol"
+            },
+            {
+              "name": "period"
+            },
+            {
+              "name": "interval"
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [
+        200,
+        500
+      ],
+      "id": "3efafaf6-192d-4f98-9b3e-0ff3f78d259a",
+      "name": "HTTP Request1"
+    }
+  ],
+  "pinData": {
+    "Gmail1": [
+      {
+        "json": {
+          "output": "I apologize for the inconvenience. It seems that the Gmail API has not been enabled for the project. To fix this issue, please follow the instructions provided:\n\n1. Go to the Google Cloud Console: https://console.developers.google.com/\n2. Select the project: 39595703942\n3. Click on \"Navigation menu\" (three horizontal lines in the top left corner) and select \"APIs & Services\" > \"Dashboard\"\n4. Click on \"Enable APIs and Services\"\n5. Search for \"Gmail API\" and click on the result\n6. Click on the \"Enable\" button\n7. Wait for a few minutes for the action to propagate to our systems\n\nOnce you have enabled the Gmail API, you can retry the tool call with the ID \"call_d8rn\". If you have already enabled the API, please wait for a few minutes and then retry the tool call.\n\nPlease note that the tool call \"call_d8rn\" is only used to send an email to adanemamitubelete@gmail.com with information about the current price of Bitcoin."
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Chat Interface": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail1": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "read email here": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "save email here": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "7447ada5-90b1-4a31-81c1-68f6ef35ffa8",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "fc351cbcff747d6f3043470d123b3b57b824e5390c543d735867d80158dda40d"
+  },
+  "id": "ddF1b57yGVNV0qMK",
+  "tags": []
+}
