@@ -225,7 +225,9 @@ async def get_crypto_data(symbol: str = "btcusd"):
             status_code=500, detail=f"Error fetching crypto data: {str(e)}"
         )
 
-
+@app.options("/api/query")
+async def preflight():
+    return {"message": "CORS preflight request successful"}
 @app.post(
     "/api/query",
     response_model=Dict[str, Any],
