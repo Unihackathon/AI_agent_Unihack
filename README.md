@@ -1,8 +1,8 @@
-# AI Financial Analyst Agent 🤖📈
+# AI Financial Analyst Agent 📈
 
 An intelligent AI agent for stock market analysis and insights, powered by machine learning and natural language processing.
 
-## 🌟 Features
+## Features
 
 - **Real-time Stock Analysis**: Get instant analysis of stock performance using advanced technical indicators
 - **AI-Powered Insights**: Natural language processing for answering questions about stocks
@@ -15,7 +15,7 @@ An intelligent AI agent for stock market analysis and insights, powered by machi
   - Moving Averages (20-day and 50-day)
   - Volume Analysis
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -76,7 +76,7 @@ yarn install
 REACT_APP_API_URL=http://localhost:8000
 ```
 
-## 🏗️ Project Structure
+## Project Structure
 
 ```
 ai-financial-analyst/
@@ -103,7 +103,7 @@ ai-financial-analyst/
 └── README.md              # Project documentation
 ```
 
-## 🎯 Usage
+## Usage
 
 ### Starting the Backend Server
 
@@ -128,7 +128,7 @@ cd Backend
 streamlit run app.py
 ```
 
-## 💻 Frontend Features
+## Frontend Features
 
 ### Dashboard
 - Real-time stock price charts
@@ -194,7 +194,7 @@ email_service.schedule_report(
 )
 ```
 
-## 🔍 Supported Markets
+## Supported Markets
 
 ### U.S. Stocks
 - Technology (AAPL, MSFT, GOOGL, etc.)
@@ -225,11 +225,11 @@ Access the API documentation at:
 4. Push to branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-## 📝 License
+## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## 🤝 Acknowledgments
+## Acknowledgments
 
 - [yfinance](https://github.com/ranaroussi/yfinance) for stock data
 - [Streamlit](https://streamlit.io/) for the dashboard interface
